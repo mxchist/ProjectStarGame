@@ -34,6 +34,8 @@ public class StarGame extends ApplicationAdapter {
 		batch.draw(img, x, y);
 		batch.setColor(0.1f, 0.7f, 0.1f, 0.5f);
 		batch.draw(region, 100, 100, 200, 200);
+		batch.setColor(0.6f, 0.1f, 0.4f, 0.5f);
+		batch.draw(region, 300, 300, 200, 200);
 		batch.end();
 	}
 	
