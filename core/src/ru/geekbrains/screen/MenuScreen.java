@@ -8,27 +8,34 @@ import ru.geekbrains.base.BaseScreen;
 
 public class MenuScreen extends BaseScreen {
 
+    private static final float V_LEN = 0.8f;
+
     private Texture img;
     private Vector2 pos;
     private Vector2 v;
-    private Vector2 gravity;
     private Vector2 touch;
+    private Vector2 common;
 
     @Override
     public void show() {
         super.show();
         img = new Texture("badlogic.jpg");
         pos = new Vector2();
-        v = new Vector2(1, 1);
-        gravity = new Vector2(0, -0.005f);
+        v = new Vector2();
         touch = new Vector2();
+        common = new Vector2();
     }
 
     @Override
     public void render(float delta) {
         super.render(delta);
-        pos.add(v);
-        v.add(gravity);
+        common.set(touch);
+        if (common.sub(pos).len() > V_LEN) {
+            pos.add(v);
+        } else {
+            pos.set(touch);
+            v.setZero();
+        }
         batch.begin();
         batch.draw(img, pos.x, pos.y);
         batch.end();
@@ -43,8 +50,8 @@ public class MenuScreen extends BaseScreen {
     @Override
     public boolean touchDown(int screenX, int screenY, int pointer, int button) {
         touch.set(screenX, Gdx.graphics.getHeight() - screenY);
-        System.out.println("touchDown touch.x = " + touch.x + " touch.y = " + touch.y);
-        pos.set(touch);
-        return super.touchDown(screenX, screenY, pointer, button);
+        v.set(touch.cpy().sub(pos));
+        v.setLength(V_LEN);
+        return false;
     }
 }
