@@ -5,10 +5,12 @@ import com.badlogic.gdx.audio.Music;
 import com.badlogic.gdx.graphics.Texture;
 import com.badlogic.gdx.graphics.g2d.TextureAtlas;
 import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.utils.Align;
 
 import java.util.List;
 
 import ru.geekbrains.base.BaseScreen;
+import ru.geekbrains.base.Font;
 import ru.geekbrains.math.Rect;
 import ru.geekbrains.pool.BulletPool;
 import ru.geekbrains.pool.EnemyPool;
@@ -23,6 +25,12 @@ import ru.geekbrains.sprite.Star;
 import ru.geekbrains.utils.EnemyEmitter;
 
 public class GameScreen extends BaseScreen {
+
+    private static final float TEXT_MARGIN = 0.01f;
+    private static final float FONT_SIZE = 0.02f;
+    private static final String FRAGS = "Frags: ";
+    private static final String HP = "HP: ";
+    private static final String LEVEL = "Level: ";
 
     private enum State {PLAYING, GAME_OVER}
 
@@ -39,6 +47,11 @@ public class GameScreen extends BaseScreen {
     private State state;
     private GameOver gameOver;
     private ButtonNewGame buttonNewGame;
+    private int frags;
+    private Font font;
+    private StringBuilder sbFrags;
+    private StringBuilder sbHp;
+    private StringBuilder sbLevel;
 
     @Override
     public void show() {
@@ -57,6 +70,10 @@ public class GameScreen extends BaseScreen {
         enemyEmitter = new EnemyEmitter(atlas, enemyPool);
         gameOver = new GameOver(atlas);
         buttonNewGame = new ButtonNewGame(atlas, this);
+        font = new Font("font/font.fnt", "font/font.png");
+        sbFrags = new StringBuilder();
+        sbHp = new StringBuilder();
+        sbLevel = new StringBuilder();
         music = Gdx.audio.newMusic(Gdx.files.internal("sounds/music.mp3"));
         music.setLooping(true);
         music.play();
@@ -82,6 +99,7 @@ public class GameScreen extends BaseScreen {
         enemyEmitter.resize(worldBounds);
         gameOver.resize(worldBounds);
         buttonNewGame.resize(worldBounds);
+        font.setSize(FONT_SIZE);
     }
 
     @Override
@@ -93,6 +111,7 @@ public class GameScreen extends BaseScreen {
         explosionPool.dispose();
         music.dispose();
         mainShip.dispose();
+        font.dispose();
         super.dispose();
     }
 
@@ -133,6 +152,7 @@ public class GameScreen extends BaseScreen {
     }
 
     public void startNewGame() {
+        frags = 0;
         mainShip.startNewGame();
         bulletPool.freeAllActiveObjects();
         explosionPool.freeAllActiveObjects();
@@ -149,7 +169,7 @@ public class GameScreen extends BaseScreen {
             mainShip.update(delta);
             bulletPool.updateActiveSprites(delta);
             enemyPool.updateActiveSprites(delta);
-            enemyEmitter.generate(delta);
+            enemyEmitter.generate(delta, frags);
         } else if (state == State.GAME_OVER) {
             buttonNewGame.update(delta);
         }
@@ -175,6 +195,9 @@ public class GameScreen extends BaseScreen {
                 if (enemy.isBulletCollision(bullet)) {
                     enemy.damage(bullet.getDamage());
                     bullet.destroy();
+                    if (enemy.isDestroyed()) {
+                        frags += 1;
+                    }
                 }
             }
         }
@@ -213,7 +236,18 @@ public class GameScreen extends BaseScreen {
             buttonNewGame.draw(batch);
         }
         explosionPool.drawActiveSprites(batch);
+        printInfo();
         batch.end();
+    }
+
+    private void printInfo() {
+        sbFrags.setLength(0);
+        sbHp.setLength(0);
+        sbLevel.setLength(0);
+        font.draw(batch, sbFrags.append(FRAGS).append(frags), worldBounds.getLeft() + TEXT_MARGIN, worldBounds.getTop() - TEXT_MARGIN);
+        font.draw(batch, sbHp.append(HP).append(mainShip.getHp()), worldBounds.pos.x, worldBounds.getTop() - TEXT_MARGIN, Align.center);
+        font.draw(batch, sbHp, mainShip.pos.x, mainShip.getBottom() - TEXT_MARGIN, Align.center);
+        font.draw(batch, sbLevel.append(LEVEL).append(enemyEmitter.getLevel()), worldBounds.getRight() - TEXT_MARGIN, worldBounds.getTop() - TEXT_MARGIN, Align.right);
     }
 
 }
